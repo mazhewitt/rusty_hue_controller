@@ -642,6 +642,8 @@ version = "0.1.0"
 dependencies = [
  "hueclient",
  "mac_address",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
