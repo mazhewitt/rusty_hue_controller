@@ -5,14 +5,12 @@ use std::io::{Error, Write};
 use mac_address::get_mac_address;
 use hueclient;
 use hueclient::{CommandLight, HueError};
-
 use serde::{Serialize, Deserialize};
-
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct BridgeInfo {
-    ip_addr: String,
-    client_token: String,
+    pub ip_addr: String,
+    pub client_token: String,
 }
 
 
