@@ -53,7 +53,7 @@ pub fn register_hue_client() -> Result<BridgeInfo, HueError> {
 }
 
 // a function that takes a bridge and the name of a group and toggeles the light state of that group
-pub fn toggle_group(bridge: hueclient::Bridge, group_name: &str) -> Result<(), HueError> {
+pub fn toggle_group(bridge: &hueclient::Bridge, group_name: &str) -> Result<(), HueError> {
     let groups = bridge.get_all_groups()?;
     for i_group in groups {
         let group = i_group.group;
@@ -79,7 +79,7 @@ mod tests {
     fn can_toggle_group() {
         let bridge_info = read_bridge_info_from_file("bridge_info.json").unwrap();
         let bridge = initialize_bridge(&bridge_info).unwrap();
-        let result = toggle_group(bridge, "Study");
+        let result = toggle_group(&bridge, "Study");
         assert!(result.is_ok());
     }
 
