@@ -6,6 +6,10 @@ use mac_address::get_mac_address;
 use hueclient;
 use hueclient::{CommandLight, HueError};
 use serde::{Serialize, Deserialize};
+use futures_util::{pin_mut, stream::StreamExt};
+use futures::executor::block_on;
+use mdns::{Record, RecordKind};
+use std::{net::IpAddr, time::Duration};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct BridgeInfo {
@@ -69,10 +73,51 @@ pub fn toggle_group(bridge: &hueclient::Bridge, group_name: &str) -> Result<(), 
     Ok(())
 }
 
+// Define the service name for hue bridge
+const SERVICE_NAME: &str = "_hue._tcp.local";
+
+// Define a function that discovers a hue bridge using mDNS
+pub async fn discover_hue_bridge() -> Result<IpAddr, mdns::Error> {
+    // Iterate through responses from each hue bridge device, asking for new devices every 15s
+    let stream = mdns::discover::all(SERVICE_NAME, Duration::from_secs(15))?.listen();
+    pin_mut!(stream);
+    while let Some(Ok(response)) = stream.next().await {
+        // Get the IP address of the hue bridge device by looking up A / AAAA records
+        let addr = response
+            .records()
+            .filter_map(to_ip_addr)
+            .next();
+        if let Some(addr) = addr {
+            // Return the IP address of the first bridge if found
+            return Ok(addr);
+        }
+    }
+    // Return an error if no hue bridge device is found
+    Err(mdns::Error::Io(io::Error::new(io::ErrorKind::NotFound, "No hue bridge found")))
+}
+
+// Define a helper function that converts a record to an IP address
+fn to_ip_addr(record: &Record) -> Option<IpAddr> {
+    match record.kind {
+        RecordKind::A(addr) => Some(addr.into()),
+        RecordKind::AAAA(addr) => Some(addr.into()),
+        _ => None,
+    }
+}
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // a test to test the discover_hue_bridge function
+    #[test]
+    fn can_discover_hue_bridge_using_mdns() {
+        let bridge_ftr = discover_hue_bridge();
+        let bridge = block_on(bridge_ftr);
+        println!("bridge is {:?}", bridge);
+        assert!(bridge.is_ok());
+    }
+
 
     // a unit test to test toggle_group
     #[test]
@@ -120,6 +165,7 @@ mod tests {
         };
         assert!(found_mac_addr)
     }
+
 
 
 }
