@@ -7,7 +7,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-hueclient = "0.4.2"
+hueclient = "0.4.3"
 mac_address = "1.1.4"
 serde = { version = "1.0.130", features = ["derive"] }
 serde_json = "1.0.70"

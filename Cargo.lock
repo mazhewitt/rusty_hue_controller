@@ -753,10 +753,14 @@ checksum = "c4a1e36c821dbe04574f602848a19f742f4fb3c98d40449f11bcad18d6b17421"
 
 [[package]]
 name = "hueclient"
-version = "0.4.2"
+version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "515b9d986e9ae1315df4523c89f15983855a4990703608f1465761f86c441f15"
+checksum = "eb0a948ac49dcf96f6ef3b1307307f24df6ad5dc4d229e5669a990912b400da8"
 dependencies = [
+ "async-std",
+ "futures",
+ "futures-util",
+ "mdns",
  "regex",
  "reqwest",
  "serde",

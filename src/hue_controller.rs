@@ -7,7 +7,6 @@ use hueclient;
 use hueclient::{CommandLight, HueError};
 use serde::{Serialize, Deserialize};
 use futures_util::{pin_mut, stream::StreamExt};
-use futures::executor::block_on;
 use mdns::{Record, RecordKind};
 use std::{net::IpAddr, time::Duration};
 
@@ -17,6 +16,31 @@ pub struct BridgeInfo {
     pub client_token: String,
 }
 
+// a function that turns off all the lights in a group
+pub fn turn_off_group(bridge: &hueclient::Bridge, group_name: &str) -> Result<(), HueError> {
+    let groups = bridge.get_all_groups()?;
+    for i_group in groups {
+        let group = i_group.group;
+        if group.name == group_name {
+            let command = CommandLight::off(Default::default());
+            bridge.set_group_state(i_group.id, &command)?;
+        }
+    }
+    Ok(())
+}
+
+// a function that turns on all the lights in a group
+pub fn turn_on_group(bridge: &hueclient::Bridge, group_name: &str) -> Result<(), HueError> {
+    let groups = bridge.get_all_groups()?;
+    for i_group in groups {
+        let group = i_group.group;
+        if group.name == group_name {
+            let command = CommandLight::on(Default::default());
+            bridge.set_group_state(i_group.id, &command)?;
+        }
+    }
+    Ok(())
+}
 
 // A function that takes a file path and returns a Result<String>
 pub fn read_bridge_info_from_file(path: &str) -> io::Result<BridgeInfo> {
@@ -108,6 +132,7 @@ fn to_ip_addr(record: &Record) -> Option<IpAddr> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use futures::executor::block_on;
 
     // a test to test the discover_hue_bridge function
     #[test]
@@ -141,7 +166,7 @@ mod tests {
     #[test]
     fn can_discover_the_bridge() {
         let maybe_bridge = hueclient::Bridge::discover();
-        let found_bridge = match maybe_bridge{
+        let found_bridge = match maybe_bridge {
             None => false,
             Some(_b) => true
         };
@@ -157,7 +182,7 @@ mod tests {
                 true
             }
             Ok(None) => {
-               false
+                false
             }
             Err(_e) => {
                 false
@@ -166,6 +191,23 @@ mod tests {
         assert!(found_mac_addr)
     }
 
+    // a test for turn_on_group
+    #[test]
+    fn can_turn_on_group() {
+        let bridge_info = read_bridge_info_from_file("bridge_info.json").unwrap();
+        let bridge = initialize_bridge(&bridge_info).unwrap();
+        let result = turn_on_group(&bridge, "Study");
+        assert!(result.is_ok());
+    }
 
-
+    // a test for turn_off_group
+    #[test]
+    fn can_turn_off_group() {
+        let bridge_info = read_bridge_info_from_file("bridge_info.json").unwrap();
+        let bridge = initialize_bridge(&bridge_info).unwrap();
+        let result = turn_off_group(&bridge, "Study");
+        assert!(result.is_ok());
+    }
 }
+
+
